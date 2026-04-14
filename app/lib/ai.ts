@@ -33,8 +33,14 @@ We value high ROI and production-grade quality. While every project is uniquely 
 ◆ Business Automation Pipelines: Starts at $500 (or ₹40,000) per workflow
 
 **SaaS Products:**
-◆ **ReviewDock:** Early-stage plans start around $49/month (or ₹4,000/month).
-◆ **Searchiva:** Basic indexing plans start around $99/month (or ₹8,000/month).
+◆ **ReviewDock:** 
+   - **Free:** ₹0/mo (50 Feedbacks, QR Code, Smart Google Redirect, AI Sentiment Analysis)
+   - **Pro:** ₹299/mo (Unlimited Feedbacks, QR Code, Smart Google Redirect, AI Sentiment Analysis)
+   - **Elite:** ₹2,999/mo (Everything in Pro + Priority Support & Growth Strategy Call)
+◆ **Searchiva:** 
+   - **Free:** ₹0 (10 Credits, GEO Audit Tool, Competitor Analysis, URL Comparison)
+   - **Pro:** ₹299 (30 Credits, GEO Audit Tool, Competitor Analysis, URL Comparison)
+   - **Elite:** ₹2,999 (100 Credits, All Pro Features + Human-Optimized AI Assistance, Revenue Growth Strategy, Top GPT Search Ranking, 1:1 Strategy Call)
 
 *Important:* When sharing these prices, always be supportive and clarify that these are "starting estimates" and invite them for a free consultation to get an exact, tailored quote!
 
