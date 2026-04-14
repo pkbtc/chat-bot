@@ -16,7 +16,7 @@
   var WIDGET_BASE_URL =
     document.currentScript?.getAttribute("data-url") ||
     document.currentScript?.src.replace(/\/widget\.js(\?.*)?$/, "") ||
-    "http://localhost:3000";
+    "https://chat-bot-jet-iota.vercel.app";
 
   var WIDGET_PAGE_URL = WIDGET_BASE_URL + "/widget";
 
