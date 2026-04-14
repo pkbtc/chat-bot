@@ -35,11 +35,13 @@ export async function POST(req: NextRequest) {
     /* Get AI response */
     const reply = await getAIResponse(message.trim(), history || []);
 
-    /* Persist to Supabase (best-effort, don't block the response) */
+    /* Persist to Supabase */
     if (sessionId && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
-      persistMessages(sessionId, message.trim(), reply).catch((err) =>
-        console.error("[Chat API] Failed to persist messages:", err)
-      );
+      try {
+        await persistMessages(sessionId, message.trim(), reply);
+      } catch (err) {
+        console.error("[Chat API] Failed to persist messages:", err);
+      }
     }
 
     return NextResponse.json(
