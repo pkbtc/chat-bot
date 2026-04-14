@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
+/* ── 100xSolutions Design Tokens (matching the main site) ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --background-subtle: #050c18;
+  --foreground: #f4f6fa;
+  --foreground-muted: #9ba6b5;
+  --foreground-subtle: #58677c;
+
+  --primary: #66f209;
+  --primary-light: #8df542;
+  --primary-dark: #4db806;
+  --primary-rgb: 102, 242, 9;
+
+  --accent: #00f0ff;
+  --accent-light: #5effff;
+  --accent-rgb: 0, 240, 255;
+
+  --surface: #030812;
+  --surface-light: #071224;
+  --surface-elevated: #0a172e;
+
+  --border: #132440;
+  --border-light: #1c3258;
+  --border-strong: var(--accent);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Reset for widget iframe ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ── Scrollbar — thin industrial ── */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ── Animations ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes typing-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.animate-in {
+  animation: fade-in 0.2s ease-out;
 }
