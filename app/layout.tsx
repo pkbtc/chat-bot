@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "100x Chatbot — AI Assistant by 100xSolutions",
+  title: "100xSolutions Assistant",
   description:
     "Embeddable AI chatbot powered by 100xSolutions. Drop a single script tag to add a smart assistant to any website.",
 };

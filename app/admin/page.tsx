@@ -165,7 +165,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Main Content: Messages View */}
-        <div className="flex-1 bg-slate-950 flex flex-col h-full">
+        <div className="flex-1 min-w-0 bg-slate-950 flex flex-col h-full">
           {selectedSession ? (
             <>
               <div className="p-4 border-b border-slate-800 bg-slate-900/80 shrink-0">
@@ -192,7 +192,7 @@ export default function AdminPanel() {
                             : 'bg-slate-900 text-slate-300 border border-slate-700'
                         }`}
                       >
-                        <pre className="font-sans whitespace-pre-wrap">{msg.text}</pre>
+                        <pre className="font-sans whitespace-pre-wrap break-words overflow-hidden">{msg.text}</pre>
                       </div>
                       <div className="text-[9px] text-slate-600 font-mono mt-1">
                         {new Date(msg.timestamp).toLocaleTimeString()}

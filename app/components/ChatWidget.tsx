@@ -58,7 +58,7 @@ export default function ChatWidget() {
     {
       id: "initial-welcome-msg",
       role: "bot",
-      text: "Hey! 👋 I'm the 100x assistant.\nHow can I help you today?",
+      text: "Hey! 👋 I'm the 100xSolutions Assistant.\nHow can I help you today?",
       timestamp: new Date(),
     },
   ]);
@@ -207,7 +207,7 @@ export default function ChatWidget() {
               lineHeight: 1.2,
             }}
           >
-            100x Assistant
+            100xSolutions Assistant
           </div>
           <div
             style={{
@@ -232,7 +232,7 @@ export default function ChatWidget() {
                 animation: "blink 1s step-end infinite",
               }}
             />
-            Online — Typically instant
+            Online (24/7 support)
           </div>
         </div>
       </div>
