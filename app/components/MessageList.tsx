@@ -82,6 +82,29 @@ function formatTime(date: Date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function TimeDisplay({ date }: { date: Date }) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <span
+      style={{
+        fontFamily: '"JetBrains Mono", monospace',
+        fontSize: 9,
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        color: "var(--foreground-subtle)",
+        marginTop: 4,
+        paddingInline: 2,
+      }}
+    >
+      {mounted ? formatTime(date) : ""}
+    </span>
+  );
+}
+
 type MessageListProps = {
   messages: Message[];
   isTyping: boolean;
@@ -146,20 +169,7 @@ export default function MessageList({
           </div>
 
           {/* Timestamp */}
-          <span
-            suppressHydrationWarning
-            style={{
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: 9,
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              color: "var(--foreground-subtle)",
-              marginTop: 4,
-              paddingInline: 2,
-            }}
-          >
-            {formatTime(msg.timestamp)}
-          </span>
+          <TimeDisplay date={msg.timestamp} />
         </div>
       ))}
 
