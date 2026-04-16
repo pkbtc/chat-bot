@@ -272,11 +272,15 @@ export default function ChatWidget() {
 
               const data = await res.json();
 
-              if (data.success && data.eventLink) {
+              if (data.success && (data.meetLink || data.eventLink)) {
+                const links = [];
+                if (data.meetLink) links.push(`◆ **Google Meet:** [Join Meeting](${data.meetLink})`);
+                if (data.eventLink) links.push(`◆ **Calendar Event:** [View Event](${data.eventLink})`);
+
                 addBotMessage(
                   `🎉 **Booking Confirmed!**\n\nYour consultation call is booked.\n\n◆ **Time:** ${formatReadableTime(
                     bookingData.time
-                  )}\n◆ **Calendar Event:** [View Event](${data.eventLink})\n\nYou'll receive a calendar invite shortly. See you there! 🚀`
+                  )}\n${links.join("\n")}\n\nA calendar invite has been sent to your email. See you there! 🚀`
                 );
               } else {
                 addBotMessage(
