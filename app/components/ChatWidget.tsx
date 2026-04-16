@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import MessageList from "./MessageList";
 import InputBox from "./InputBox";
+import InlineTimePicker from "./InlineTimePicker";
 
 /* ── Types ── */
 type Message = {
@@ -121,16 +122,25 @@ function parseDateTime(input: string): string | null {
 
 function formatReadableTime(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Kolkata",
+  
+  const opts: any = { timeZone: "Asia/Kolkata" };
+  const getPart = (opt: any) => new Intl.DateTimeFormat("en-US", { ...opt, ...opts }).format(d);
+
+  const weekday = getPart({ weekday: "short" });
+  const day = getPart({ day: "2-digit" });
+  const month = getPart({ month: "short" });
+  const year = getPart({ year: "numeric" });
+  
+  const formatter = new Intl.DateTimeFormat("en-US", { 
+      hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" 
   });
+  const parts = formatter.formatToParts(d);
+  let hour = parts.find(p => p.type === "hour")?.value || "12";
+  if (hour.length === 1) hour = "0" + hour;
+  const minute = parts.find(p => p.type === "minute")?.value || "00";
+  const dayPeriod = (parts.find(p => p.type === "dayPeriod")?.value || "am").toLowerCase();
+  
+  return `${weekday}, ${day} ${month}, ${year}, ${hour}:${minute} ${dayPeriod}`;
 }
 
 /* ── Component ── */
@@ -221,7 +231,7 @@ export default function ChatWidget() {
           setBookingData((prev) => ({ ...prev, email: text.trim() }));
           setBookingStep("time");
           addBotMessage(
-            `Got it! ✅\n\nWhen would you like to book the call? 📅\n\nYou can say something like:\n◆ "Tomorrow 3pm"\n◆ "Today 5:30 PM"\n◆ "2026-04-20 14:00"`
+            `Got it! ✅\n\nWhen would you like to book the call? 📅\n\nPlease select a date and time below.`
           );
           break;
         }
@@ -230,7 +240,7 @@ export default function ChatWidget() {
           const parsed = parseDateTime(text.trim());
           if (!parsed) {
             addBotMessage(
-              "I couldn't understand that time. Please try again.\n\nExamples:\n◆ \"Tomorrow 3pm\"\n◆ \"Today 5:30 PM\"\n◆ \"2026-04-20 14:00\""
+              "I couldn't understand that time or it is in the past. Please try again.\n\nPlease select a future date and time from the input."
             );
             return;
           }
@@ -321,10 +331,18 @@ export default function ChatWidget() {
     async (text: string) => {
       if (!text.trim() || isTyping) return;
 
+      let displayText = text.trim();
+      if (bookingStep === "time") {
+        const parsed = parseDateTime(text.trim());
+        if (parsed) {
+          displayText = formatReadableTime(parsed);
+        }
+      }
+
       const userMsg: Message = {
         id: generateId(),
         role: "user",
-        text: text.trim(),
+        text: displayText,
         timestamp: new Date(),
       };
 
@@ -363,7 +381,7 @@ export default function ChatWidget() {
         if (data.type === "booking") {
           setBookingStep("name");
           addBotMessage(
-            "Great! Let's book a free consultation call. 🗓️\n\nFirst, **what's your name?**\n\n_(Type \"cancel\" anytime to abort)_"
+            "Great! Let's book a free consultation call. 🗓️\n\nFirst, **what's your name?**\n\nType **\"cancel\"** anytime to abort."
           );
         } else {
           const botMsg: Message = {
@@ -401,7 +419,7 @@ export default function ChatWidget() {
       case "email":
         return "Enter your email...";
       case "time":
-        return "e.g. Tomorrow 3pm...";
+        return 'Or type "cancel" to abort...';
       case "confirm":
         return 'Type "yes" to confirm...';
       default:
@@ -588,6 +606,11 @@ export default function ChatWidget() {
         </div>
       )}
 
+      {/* ── Time Picker Inline (shown only when bookingStep === "time") ── */}
+      {bookingStep === "time" && !isTyping && (
+        <InlineTimePicker onConfirm={sendMessage} isMobile={isMobile} />
+      )}
+
       {/* ── Booking Progress Indicator ── */}
       {bookingStep && (
         <div
@@ -660,6 +683,7 @@ export default function ChatWidget() {
         disabled={isTyping}
         isMobile={isMobile}
         placeholder={getPlaceholder()}
+        inputType="text"
       />
 
       {/* ── Footer ── */}

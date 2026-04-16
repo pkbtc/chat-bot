@@ -7,6 +7,7 @@ type InputBoxProps = {
   disabled?: boolean;
   isMobile: boolean;
   placeholder?: string;
+  inputType?: "text" | "datetime-local" | "email" | "tel";
 };
 
 export default function InputBox({
@@ -14,10 +15,15 @@ export default function InputBox({
   disabled = false,
   isMobile,
   placeholder = "Type a message...",
+  inputType = "text",
 }: InputBoxProps) {
-  const [input, setInput] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [input, setInput] = React.useState("");
+  const [isFocused, setIsFocused] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setInput("");
+  }, [inputType]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +53,7 @@ export default function InputBox({
     >
       <input
         ref={inputRef}
-        type="text"
+        type={inputType}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder={placeholder}
