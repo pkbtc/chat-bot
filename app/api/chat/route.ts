@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     /* Get AI response */
-    const reply = await getAIResponse(message.trim(), history || []);
+    const { reply, type } = await getAIResponse(message.trim(), history || []);
 
     /* Persist to Supabase */
     if (sessionId && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { reply, sessionId: sessionId || "" },
+      { reply, type, sessionId: sessionId || "" },
       { status: 200 }
     );
   } catch (err) {

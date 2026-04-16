@@ -6,12 +6,14 @@ type InputBoxProps = {
   onSend: (message: string) => void;
   disabled?: boolean;
   isMobile: boolean;
+  placeholder?: string;
 };
 
 export default function InputBox({
   onSend,
   disabled = false,
   isMobile,
+  placeholder = "Type a message...",
 }: InputBoxProps) {
   const [input, setInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -48,7 +50,7 @@ export default function InputBox({
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type a message..."
+        placeholder={placeholder}
         autoComplete="off"
         disabled={disabled}
         onFocus={() => setIsFocused(true)}
