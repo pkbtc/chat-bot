@@ -13,16 +13,28 @@ type Message = {
   timestamp: string;
 };
 
+type Booking = {
+  id: string;
+  name: string;
+  email: string;
+  time: string;
+  meet_link: string;
+  event_link: string;
+};
+
 export default function AdminPanel() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
+  const [activeTab, setActiveTab] = useState<"sessions" | "bookings">("sessions");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingBookings, setLoadingBookings] = useState(false);
   const [error, setError] = useState("");
 
   const fetchSessions = async (pass: string) => {
@@ -67,9 +79,27 @@ export default function AdminPanel() {
     setLoadingMessages(false);
   };
 
+  const fetchBookings = async (pass: string) => {
+    setLoadingBookings(true);
+    try {
+      const res = await fetch("/api/admin/bookings", {
+        headers: { "x-admin-password": pass },
+      });
+      if (res.status === 401) return;
+      const data = await res.json();
+      if (data.bookings) {
+        setBookings(data.bookings);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setLoadingBookings(false);
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     fetchSessions(password);
+    fetchBookings(password);
   };
 
   /* ── 1. LOGIN SCREEN ── */
@@ -123,17 +153,37 @@ export default function AdminPanel() {
           </div>
           <h1 className="font-bold tracking-widest uppercase">100x Chat Admin</h1>
         </div>
-        <button 
-          onClick={() => fetchSessions(password)}
-          className="text-xs font-mono text-[#00f0ff] border border-[#00f0ff] hover:bg-[#00f0ff]/10 px-3 py-1.5 transition-colors"
-        >
-          REFRESH
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-slate-950 p-1 border border-slate-800 rounded">
+            <button 
+              onClick={() => setActiveTab("sessions")}
+              className={`text-xs font-mono px-4 py-1.5 transition-colors rounded-sm ${activeTab === 'sessions' ? 'bg-[#66f209] text-black font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              SESSIONS
+            </button>
+            <button 
+              onClick={() => setActiveTab("bookings")}
+              className={`text-xs font-mono px-4 py-1.5 transition-colors rounded-sm ${activeTab === 'bookings' ? 'bg-[#66f209] text-black font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              BOOKINGS
+            </button>
+          </div>
+          <button 
+            onClick={() => {
+              fetchSessions(password);
+              fetchBookings(password);
+            }}
+            className="text-xs font-bold font-mono text-[#00f0ff] border border-[#00f0ff] hover:bg-[#00f0ff]/10 px-4 py-2 transition-colors ml-2"
+          >
+            REFRESH
+          </button>
+        </div>
       </header>
 
       {/* Main layout */}
       <div className="flex flex-1 overflow-hidden">
-        
+        {activeTab === "sessions" ? (
+          <>
         {/* Sidebar: Sessions List */}
         <div className="w-80 border-r border-slate-800 bg-slate-900/50 flex flex-col h-full shrink-0">
           <div className="p-4 border-b border-slate-800">
@@ -210,6 +260,63 @@ export default function AdminPanel() {
             </div>
           )}
         </div>
+          </>
+        ) : (
+          <div className="flex-1 min-w-0 bg-slate-950 flex flex-col h-full p-6 overflow-y-auto">
+            <h2 className="text-xl font-bold tracking-widest uppercase mb-6 text-slate-200 border-b border-slate-800 pb-4">
+              Scheduled <span className="text-[#66f209]">Bookings</span>
+            </h2>
+            {loadingBookings ? (
+              <div className="text-sm text-slate-500 font-mono animate-pulse">Loading bookings...</div>
+            ) : bookings.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {bookings.map((b, idx) => (
+                  <div key={idx} className="bg-slate-900 shadow-lg border border-slate-700 hover:border-slate-500 transition-colors p-5 flex flex-col gap-3 relative group">
+                    <div className="absolute top-0 right-0 bg-slate-800 text-slate-300 px-3 py-1 text-[10px] font-mono font-bold tracking-wider rounded-bl border-l border-b border-slate-700">
+                      {new Date(b.time).toLocaleDateString()}
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-100">{b.name}</h3>
+                      <a href={`mailto:${b.email}`} className="text-xs text-[#00f0ff] hover:underline font-mono truncate block mt-1">
+                        {b.email}
+                      </a>
+                    </div>
+                    
+                    <div className="bg-slate-950 rounded border border-slate-800 p-3 mt-2 font-mono text-sm">
+                      <div className="text-slate-400 text-xs mb-1 uppercase tracking-wider">Meeting Time</div>
+                      <div className="text-[#66f209] font-bold">
+                        {new Date(b.time).toLocaleString([], { hour: '2-digit', minute: '2-digit', weekday: 'short', month: 'short', day: 'numeric'})}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-auto pt-4 flex gap-3">
+                      {b.meet_link ? (
+                        <a href={b.meet_link} target="_blank" rel="noopener noreferrer" className="flex-1 bg-[#66f209] text-black text-center py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-[#52d106] hover:shadow-[0_0_15px_rgba(102,242,9,0.4)] transition-all">
+                          Join Meet
+                        </a>
+                      ) : (
+                        <div className="flex-1 bg-slate-800 text-slate-500 text-center py-2.5 text-xs font-bold uppercase tracking-wider cursor-not-allowed">
+                          No Meet
+                        </div>
+                      )}
+                      
+                      {b.event_link && (
+                         <a href={b.event_link} target="_blank" rel="noopener noreferrer" className="flex-1 border border-[#00f0ff] text-[#00f0ff] text-center py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-[#00f0ff]/10 hover:shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all">
+                           Calendar
+                         </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm bg-slate-900 border border-slate-800 p-6 text-center text-slate-500 font-mono">
+                No bookings found in the database.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
