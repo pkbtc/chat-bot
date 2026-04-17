@@ -29,29 +29,33 @@ export default function InlineTimePicker({ onConfirm, isMobile }: { onConfirm: (
       const minutes = parseInt(minutesStr);
       d.setHours(hours, minutes, 0, 0);
 
+      const now = new Date();
+      if (d.getTime() <= now.getTime()) {
+        setErrorDetails("Please select a future date and time.");
+        return;
+      }
+
       const day = d.getDay();
       const timeValue = hours + minutes / 60;
       let isValidTime = false;
 
       if (day === 0 || day === 6) {
-        // Weekends: all day except 3 AM - 10 AM
-        if (timeValue <= 3 || timeValue >= 10) {
+        // Sat-Sun: Anytime except 2 AM - 10 AM
+        if (timeValue <= 2 || timeValue >= 10) {
           isValidTime = true;
-        } else {
-          setErrorDetails("On weekends, booking is unavailable from 3:00 AM to 10:00 AM.");
         }
       } else {
-        // Weekdays: Only from 7 PM to 4 AM
-        if (timeValue >= 19 || timeValue <= 4) {
+        // Mon-Fri: 7 PM to 2 AM
+        if (timeValue >= 19 || timeValue <= 2) {
           isValidTime = true;
-        } else {
-          setErrorDetails("On weekdays, booking is only available from 7:00 PM to 4:00 AM.");
         }
       }
 
       if (isValidTime) {
         setErrorDetails("");
         onConfirm(d.toISOString());
+      } else {
+        setErrorDetails("Booking not available at this time. Please try within our business hours.");
       }
     }
   };
@@ -141,7 +145,7 @@ export default function InlineTimePicker({ onConfirm, isMobile }: { onConfirm: (
                 Selected Time
               </label>
               <span style={{ fontSize: 9, color: "var(--foreground-subtle)", lineHeight: 1.3 }}>
-                Mon-Fri: 7 PM - 4 AM<br/>Sat-Sun: Anytime (Except 3 AM - 10 AM)
+                Mon-Fri: 7 PM - 2 AM<br/>Sat-Sun: Anytime (Except 2 AM - 10 AM)
               </span>
             </div>
             <input

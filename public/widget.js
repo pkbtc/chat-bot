@@ -193,6 +193,44 @@
   wrapper.appendChild(iframe);
   document.body.appendChild(wrapper);
 
+  var pendingMessage = null;
+  iframe.addEventListener("load", function () {
+    if (pendingMessage && iframe.contentWindow) {
+      iframe.contentWindow.postMessage(pendingMessage, "*");
+      pendingMessage = null;
+    }
+  });
+
+  /* ── API for host website to open chat programmatically ── */
+  window.addEventListener("100x:open-chat", function (e) {
+    var detail = e.detail || {};
+    var msgObj = detail.message ? {
+      type: "__100x_chatbot_open",
+      message: detail.message,
+      send: detail.send
+    } : null;
+
+    if (!isOpen) {
+      isOpen = true;
+      trigger.classList.add("open");
+      trigger.setAttribute("aria-label", "Close chat");
+      wrapper.classList.add("open");
+
+      if (!iframe.src) {
+        if (msgObj) pendingMessage = msgObj;
+        iframe.src = WIDGET_PAGE_URL;
+      } else {
+        if (msgObj && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(msgObj, "*");
+        }
+      }
+    } else {
+      if (msgObj && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(msgObj, "*");
+      }
+    }
+  });
+
   /* ── Toggle handler ── */
   trigger.addEventListener("click", function () {
     isOpen = !isOpen;

@@ -427,6 +427,20 @@ export default function ChatWidget() {
     }
   };
 
+  /* ── Listen for cross-origin messages from host widget ── */
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === "__100x_chatbot_open") {
+        const { message, send } = e.data;
+        if (message && send) {
+          sendMessage(message);
+        }
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [sendMessage]);
+
   return (
     <div
       style={{
