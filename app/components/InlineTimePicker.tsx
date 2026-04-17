@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 
 export default function InlineTimePicker({ onConfirm, isMobile }: { onConfirm: (val: string) => void, isMobile: boolean }) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string>("10:00");
+  const [selectedTime, setSelectedTime] = useState<string>("19:00");
+  const [errorDetails, setErrorDetails] = useState<string>("");
 
   // Generate next 7 days
   const upcomingDays = Array.from({ length: 7 }, (_, i) => {
@@ -23,9 +24,35 @@ export default function InlineTimePicker({ onConfirm, isMobile }: { onConfirm: (
   const handleConfirm = () => {
     if (selectedDate && selectedTime) {
       const d = new Date(selectedDate);
-      const [hours, minutes] = selectedTime.split(":");
-      d.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      onConfirm(d.toISOString());
+      const [hoursStr, minutesStr] = selectedTime.split(":");
+      const hours = parseInt(hoursStr);
+      const minutes = parseInt(minutesStr);
+      d.setHours(hours, minutes, 0, 0);
+
+      const day = d.getDay();
+      const timeValue = hours + minutes / 60;
+      let isValidTime = false;
+
+      if (day === 0 || day === 6) {
+        // Weekends: all day except 3 AM - 10 AM
+        if (timeValue <= 3 || timeValue >= 10) {
+          isValidTime = true;
+        } else {
+          setErrorDetails("On weekends, booking is unavailable from 3:00 AM to 10:00 AM.");
+        }
+      } else {
+        // Weekdays: Only from 7 PM to 4 AM
+        if (timeValue >= 19 || timeValue <= 4) {
+          isValidTime = true;
+        } else {
+          setErrorDetails("On weekdays, booking is only available from 7:00 PM to 4:00 AM.");
+        }
+      }
+
+      if (isValidTime) {
+        setErrorDetails("");
+        onConfirm(d.toISOString());
+      }
     }
   };
 
@@ -107,11 +134,16 @@ export default function InlineTimePicker({ onConfirm, isMobile }: { onConfirm: (
         </div>
 
         {/* Time Input & Confirm */}
-        <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "flex-start" }}>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={{ fontSize: 10, textTransform: "uppercase", fontWeight: 700, color: "var(--foreground-subtle)", letterSpacing: "0.05em" }}>
-              Selected Time
-            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <label style={{ fontSize: 10, textTransform: "uppercase", fontWeight: 700, color: "var(--foreground)", letterSpacing: "0.05em" }}>
+                Selected Time
+              </label>
+              <span style={{ fontSize: 9, color: "var(--foreground-subtle)", lineHeight: 1.3 }}>
+                Mon-Fri: 7 PM - 4 AM<br/>Sat-Sun: Anytime (Except 3 AM - 10 AM)
+              </span>
+            </div>
             <input
               type="time"
               value={selectedTime}
@@ -150,6 +182,16 @@ export default function InlineTimePicker({ onConfirm, isMobile }: { onConfirm: (
             Confirm
           </button>
         </div>
+        {errorDetails && (
+          <div style={{ 
+            marginTop: 10, 
+            fontSize: 11, 
+            color: "var(--destructive, #ef4444)", 
+            fontWeight: 600 
+          }}>
+            ❌ {errorDetails}
+          </div>
+        )}
       </div>
     </div>
   );
