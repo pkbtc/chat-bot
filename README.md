@@ -1,36 +1,286 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 100x Chatbot 🤖
 
-## Getting Started
+> **AI-powered, embeddable chatbot for 100xSolutions** — built with Next.js, Groq (LLaMA 3.3 70B), Supabase, and Google Calendar. Drop it into any website with a single `<script>` tag.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| ⚡ **Sub-second AI** | Powered by [Groq](https://groq.com) with LLaMA 3.3-70B — blazing fast inference |
+| 🧠 **Intent Detection** | Automatically classifies messages as `chat` or `booking` |
+| 📅 **Auto Booking** | Collects name + email + time → creates a Google Calendar event with a Google Meet link |
+| 💾 **Persistent Sessions** | Chat history stored in Supabase, keyed by `sessionId` |
+| 🔒 **iframe Sandboxed** | Widget loads in an iframe — zero CSS conflicts with the host page |
+| 🌐 **Embeddable Widget** | One `<script>` tag injects the chat bubble into any website |
+| 🛡️ **CORS Ready** | API routes and `widget.js` are fully CORS-enabled |
+| 🗓️ **Slot Deduplication** | Prevents double-bookings by checking Supabase before creating calendar events |
+
+---
+
+## 🏗️ Architecture
+
+```
+chat-bot/
+├── app/
+│   ├── api/
+│   │   ├── auth/          # Google OAuth flow (admin one-time setup)
+│   │   ├── book/          # POST /api/book  → creates Calendar event + saves to DB
+│   │   ├── chat/          # POST /api/chat  → Groq AI response + persists messages
+│   │   ├── history/       # GET  /api/history → fetches session chat history
+│   │   └── admin/         # Admin-only endpoints
+│   ├── components/
+│   │   ├── ChatWidget.tsx      # Main chat UI (floating bubble + panel)
+│   │   ├── MessageList.tsx     # Renders message bubbles
+│   │   ├── InputBox.tsx        # Chat input with send button
+│   │   └── InlineTimePicker.tsx # Time picker for booking flow
+│   ├── lib/
+│   │   ├── ai.ts               # Groq integration + intent detection + AI agent
+│   │   ├── db.ts               # Supabase client + schema reference
+│   │   ├── googleAuth.ts       # Google OAuth2 client
+│   │   ├── googleCalendar.ts   # Create Calendar events with Meet links
+│   │   ├── mail.ts             # Email notifications (Nodemailer)
+│   │   └── session.ts          # Session utilities
+│   ├── admin/             # Admin dashboard (view bookings & chats)
+│   ├── widget/            # Embeddable widget page (rendered inside iframe)
+│   └── page.tsx           # Landing page with embed instructions
+├── public/
+│   └── widget.js          # Script injected into host websites
+└── next.config.ts         # iframe + CORS headers configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Quick Start
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Clone & Install
 
-## Learn More
+```bash
+git clone <repo-url>
+cd chat-bot
+bun install   # or: npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Set Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a `.env.local` file in the root:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+# ── Groq AI ──────────────────────────────────────
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.3-70b-versatile   # optional, this is the default
 
-## Deploy on Vercel
+# ── Supabase ─────────────────────────────────────
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# ── Google OAuth (for Calendar booking) ──────────
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_REDIRECT_URI=https://yourdomain.com/api/auth/google/callback
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# ── Email (Nodemailer) ───────────────────────────
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@email.com
+SMTP_PASS=your_app_password
+
+# ── App ──────────────────────────────────────────
+NEXTAUTH_SECRET=your_random_secret
+```
+
+### 3. Set Up Supabase
+
+Run this SQL in your [Supabase SQL Editor](https://supabase.com/dashboard):
+
+```sql
+CREATE TABLE sessions (
+  session_id UUID PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE messages (
+  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  session_id UUID REFERENCES sessions(session_id),
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE bookings (
+  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  time TIMESTAMP WITH TIME ZONE NOT NULL,
+  meet_link TEXT,
+  event_link TEXT,
+  event_id TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 4. Authorize Google Calendar (One-Time)
+
+This allows the bot to create calendar events on your behalf:
+
+1. Start the dev server
+2. Visit `http://localhost:3000/api/auth/google` in your browser
+3. Complete the Google OAuth flow
+4. Tokens are stored — you won't need to do this again
+
+### 5. Run
+
+```bash
+bun dev   # or: npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the landing page with embed instructions.
+
+---
+
+## 🔌 Embedding the Widget
+
+Add this single line to any website, just before the closing `</body>` tag:
+
+```html
+<script src="https://yourdomain.com/widget.js"></script>
+```
+
+Replace `yourdomain.com` with wherever this chatbot app is deployed. The widget will:
+- Inject a floating chat bubble into the bottom-right corner
+- Load the full chat UI in an sandboxed `<iframe>` (no CSS conflicts)
+- Work on any website — React, plain HTML, WordPress, Webflow, etc.
+
+---
+
+## 🤖 How the AI Works
+
+```
+User Message
+     │
+     ▼
+┌─────────────────────────┐
+│   Intent Detection      │  ← Groq classifies: "booking" or "chat"
+└─────────────────────────┘
+     │
+     ├─── "chat" ──────────▶ Groq LLaMA 3.3-70B answers as 100xSolutions consultant
+     │
+     └─── "booking" ───────▶ Booking flow starts:
+                               1. Bot asks for name
+                               2. Bot asks for email
+                               3. User picks a time slot
+                               4. POST /api/book creates Google Calendar event
+                               5. User receives Google Meet link + email invite
+```
+
+The system prompt positions the AI as a **senior growth consultant** for 100xSolutions, trained to:
+- Answer questions about services (AI, automation, web apps, SaaS)
+- Suggest a free consultation call first
+- Provide SaaS pricing for Searchiva and ReviewDock
+- Hand off bookings to the automated calendar flow
+
+---
+
+## 📡 API Reference
+
+### `POST /api/chat`
+
+Send a message and receive an AI response.
+
+**Request Body:**
+```json
+{
+  "message": "Tell me about your services",
+  "sessionId": "uuid-v4-string",
+  "history": [
+    { "role": "user", "content": "Hi" },
+    { "role": "bot", "content": "Hello! How can I help?" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "reply": "We help businesses scale 100× using AI and automation...",
+  "type": "chat",
+  "sessionId": "uuid-v4-string"
+}
+```
+
+`type` is either `"chat"` or `"booking"` — the frontend uses this to trigger the booking flow.
+
+---
+
+### `POST /api/book`
+
+Creates a Google Calendar meeting with a Meet link.
+
+**Request Body:**
+```json
+{
+  "name": "Rahul Sharma",
+  "email": "rahul@example.com",
+  "time": "2025-04-25T10:00:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "meetLink": "https://meet.google.com/xxx-xxxx-xxx",
+  "eventLink": "https://calendar.google.com/event?eid=..."
+}
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | [Next.js 16](https://nextjs.org) (App Router) |
+| Language | TypeScript |
+| AI / LLM | [Groq](https://groq.com) — LLaMA 3.3-70B |
+| Database | [Supabase](https://supabase.com) (PostgreSQL) |
+| Calendar | [Google Calendar API](https://developers.google.com/calendar) via OAuth 2.0 |
+| Email | [Nodemailer](https://nodemailer.com) |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com) |
+| Package Manager | [Bun](https://bun.sh) |
+
+---
+
+## 📁 Key Files
+
+| File | Purpose |
+|---|---|
+| `app/lib/ai.ts` | Groq client, intent detection, main AI response, AI agent for booking extraction |
+| `app/lib/db.ts` | Supabase client + schema docs |
+| `app/lib/googleCalendar.ts` | Create calendar events with Google Meet links |
+| `app/api/chat/route.ts` | Chat endpoint — calls Groq, persists to Supabase |
+| `app/api/book/route.ts` | Booking endpoint — validates, checks slots, creates event |
+| `public/widget.js` | Injected script that adds the chat bubble to host sites |
+| `next.config.ts` | iframe + CORS headers for widget embedding |
+
+---
+
+## 🔒 Security Notes
+
+- The widget loads inside an `<iframe>` — it is **sandboxed** from the host page's CSS and JS
+- All API routes include CORS headers (`Access-Control-Allow-Origin: *`) to allow cross-origin requests from any embedded site
+- `X-Frame-Options: ALLOWALL` is set on the `/widget` route to enable iframe embedding
+- Supabase keys exposed to the client are **anon keys** (read/write controlled by RLS policies)
+- Google OAuth tokens are stored server-side only
+
+---
+
+## 🤝 Contributing
+
+This is a private project for [100xSolutions](https://www.100xsolutions.in). For questions or issues, DM us on [Instagram @100xsolutions.in](https://instagram.com/100xsolutions.in).
+
+---
+
+<p align="center">Built with ⚡ by <a href="https://www.100xsolutions.in">100xSolutions</a> — IITians helping businesses scale 100×</p>
