@@ -462,70 +462,14 @@ export default function ChatWidget() {
           padding: isMobile ? "16px" : "14px 16px",
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          gap: 10,
           flexShrink: 0,
           paddingTop: isMobile
             ? "max(16px, env(safe-area-inset-top, 16px))"
             : "14px",
+          overflow: "hidden",
         }}
       >
-        {/* Home button — mobile only */}
-        {isMobile && (
-          <button
-            id="chatbot-home-btn"
-            aria-label="Back to website"
-            title="Back to website"
-            onClick={() => {
-              try {
-                // Notify parent iframe host to close/navigate back
-                window.parent.postMessage({ type: "__100x_chatbot_close" }, "*");
-              } catch (_) {}
-              // Fallback: go back in history or navigate to main site
-              if (window.history.length > 1) {
-                window.history.back();
-              } else {
-                window.location.href = "https://www.100xsolutions.in";
-              }
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(102,242,9,0.12)";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-light)";
-            }}
-            style={{
-              width: 36,
-              height: 36,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              background: "transparent",
-              border: "1px solid var(--border-light)",
-              cursor: "pointer",
-              borderRadius: 0,
-              transition: "all 0.15s",
-              color: "var(--foreground-muted)",
-            }}
-          >
-            {/* Home / house icon */}
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
-              <polyline points="9 21 9 12 15 12 15 21" />
-            </svg>
-          </button>
-        )}
 
         {/* Logo icon */}
         <div
@@ -593,33 +537,96 @@ export default function ChatWidget() {
           </div>
         </div>
 
-        {/* Cancel booking button */}
-        {bookingStep && (
-          <button
-            onClick={() => {
-              setBookingStep(null);
-              setBookingData({ name: "", email: "", time: "" });
-              addBotMessage(
-                "Booking cancelled. No worries! ✌️\nLet me know if you need anything else."
-              );
-            }}
-            style={{
-              padding: "6px 12px",
-              fontSize: 10,
-              fontFamily: '"JetBrains Mono", monospace',
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              background: "transparent",
-              color: "var(--accent)",
-              border: "1px solid var(--border-light)",
-              cursor: "pointer",
-              borderRadius: 0,
-              transition: "all 0.15s",
-            }}
-          >
-            ✕ Cancel
-          </button>
-        )}
+        {/* Right-side actions: Home button (mobile) + Cancel booking button */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {/* Cancel booking button */}
+          {bookingStep && (
+            <button
+              onClick={() => {
+                setBookingStep(null);
+                setBookingData({ name: "", email: "", time: "" });
+                addBotMessage(
+                  "Booking cancelled. No worries! ✌️\nLet me know if you need anything else."
+                );
+              }}
+              style={{
+                padding: "6px 10px",
+                fontSize: 10,
+                fontFamily: '"JetBrains Mono", monospace',
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                background: "transparent",
+                color: "var(--accent)",
+                border: "1px solid var(--border-light)",
+                cursor: "pointer",
+                borderRadius: 0,
+                transition: "all 0.15s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              ✕ Cancel
+            </button>
+          )}
+
+          {/* Home button — mobile only */}
+          {isMobile && (
+            <button
+              id="chatbot-home-btn"
+              aria-label="Back to website"
+              title="Back to website"
+              onClick={(e) => {
+                e.stopPropagation();
+                try {
+                  // Tell the parent page to close/hide the chatbot
+                  window.parent.postMessage({ type: "__100x_chatbot_close" }, "*");
+                  // Navigate the TOP-LEVEL page (not the iframe) to the main site
+                  window.top!.location.href = "https://www.100xsolutions.in";
+                } catch (_) {
+                  // Cross-origin fallback: navigate current frame
+                  window.location.href = "https://www.100xsolutions.in";
+                }
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(102,242,9,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--primary)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--primary)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-light)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--foreground-muted)";
+              }}
+              style={{
+                width: 32,
+                height: 32,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                background: "transparent",
+                border: "1px solid var(--border-light)",
+                cursor: "pointer",
+                borderRadius: 0,
+                transition: "all 0.15s",
+                color: "var(--foreground-muted)",
+              }}
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+                <polyline points="9 21 9 12 15 12 15 21" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Messages ── */}
